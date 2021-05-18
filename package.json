@@ -1,0 +1,32 @@
+{
+  "name": "json4class",
+  "version": "0.0.1",
+  "description": "JSON stringifier and parser for instances of classes.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "json",
+    "typescript",
+    "decorator",
+    "class"
+  ],
+  "author": "Eric.Tsai",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/node": "^15.3.0",
+    "typescript": "^4.2.4"
+  },
+  "dependencies": {
+    "reflect-metadata": "^0.1.13"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/iwares/json4class.git"
+  },
+  "bugs": {
+    "url": "https://github.com/iwares/json4class/issues"
+  },
+  "homepage": "https://github.com/iwares/json4class#readme"
+}
