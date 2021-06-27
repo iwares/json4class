@@ -2,8 +2,8 @@ import 'reflect-metadata';
 export declare type Class<T = any> = {
     new (): T;
 };
-export declare type Stringifier = (v: any) => string;
-export declare type Parser = (s: string) => any;
+export declare type Stringifier = (v: any) => string | number;
+export declare type Parser = (s: string | number) => any;
 export declare function json4class(constructor: Class): PropertyDecorator;
 export declare namespace json4class {
     var version: string;

@@ -28,16 +28,21 @@ export function json4class(arg1: Function, arg2?: Function): PropertyDecorator {
   }
 }
 
-json4class.version = '0.0.1';
+json4class.version = '0.0.2';
 
 json4class.normalize = function(object: any): any {
+  if (object === null || object === undefined)
+    return object;
+
   let fields: { [key: string]: FieldConfig } = Reflect.getMetadata('json4class:fields', object) || {};
   let result: any = {};
 
   for (let prop in object) {
     let field = fields[prop] || {}, value = object[prop]
 
-    if (field.stringifier) {
+    if (value === null || value === undefined) {
+      result[prop] = value;
+    } else if (field.stringifier) {
       result[prop] = field.stringifier(value);
     } else if (field.class == Date || value instanceof Date) {
       result[prop] = json4class.dateStringifier(value);
@@ -56,6 +61,9 @@ json4class.stringify = function(object: any, space?: string | number): string {
 }
 
 json4class.specialize = function <T>(object: any, constructor: { new(): T }): T {
+  if (object === null || object === undefined)
+    return <T><unknown>object;
+
   let result: any = new constructor();
   let fields: { [key: string]: FieldConfig } = Reflect.getMetadata('json4class:fields', result) || {};
 
@@ -64,7 +72,9 @@ json4class.specialize = function <T>(object: any, constructor: { new(): T }): T 
     if (!Object.prototype.hasOwnProperty.call(object, prop))
       continue;
 
-    if (field.parser) {
+    if (object[prop] === null || object[prop] === undefined) {
+      result[prop] = object[prop];
+    } else if (field.parser) {
       result[prop] = field.parser(object[prop]);
     } else if (field.class == Date) {
       result[prop] = json4class.dateParser(object[prop]);
