@@ -6,8 +6,8 @@ function json4class(arg1, arg2) {
     return function (target, prop) {
         let config = {};
         if (typeof arg1 === 'function' && typeof arg2 === 'function') {
-            config.stringifier = arg1;
-            config.parser = arg2;
+            config.normalizer = arg1;
+            config.specializer = arg2;
         }
         else if (typeof arg1 === 'function') {
             config.class = arg1;
@@ -18,10 +18,16 @@ function json4class(arg1, arg2) {
     };
 }
 exports.json4class = json4class;
-json4class.version = '0.0.2';
+json4class.version = '0.0.3';
 json4class.normalize = function (object) {
-    if (object === null || object === undefined)
+    if (typeof object !== 'object')
         return object;
+    if (Array.isArray(object)) {
+        let result = [];
+        for (let i = 0; i < object.length; ++i)
+            result[i] = json4class.normalize(object[i]);
+        return result;
+    }
     let fields = Reflect.getMetadata('json4class:fields', object) || {};
     let result = {};
     for (let prop in object) {
@@ -29,11 +35,11 @@ json4class.normalize = function (object) {
         if (value === null || value === undefined) {
             result[prop] = value;
         }
-        else if (field.stringifier) {
-            result[prop] = field.stringifier(value);
+        else if (field.normalizer) {
+            result[prop] = field.normalizer(value);
         }
         else if (field.class == Date || value instanceof Date) {
-            result[prop] = json4class.dateStringifier(value);
+            result[prop] = json4class.dateNormalizer(value);
         }
         else if (typeof value === 'object') {
             result[prop] = json4class.normalize(value);
@@ -48,8 +54,14 @@ json4class.stringify = function (object, space) {
     return JSON.stringify(json4class.normalize(object), null, space);
 };
 json4class.specialize = function (object, constructor) {
-    if (object === null || object === undefined)
+    if (typeof object !== 'object')
         return object;
+    if (Array.isArray(object)) {
+        let result = [];
+        for (let i = 0; i < object.length; ++i)
+            result[i] = json4class.specialize(object[i], constructor);
+        return result;
+    }
     let result = new constructor();
     let fields = Reflect.getMetadata('json4class:fields', result) || {};
     for (let prop in object) {
@@ -59,11 +71,11 @@ json4class.specialize = function (object, constructor) {
         if (object[prop] === null || object[prop] === undefined) {
             result[prop] = object[prop];
         }
-        else if (field.parser) {
-            result[prop] = field.parser(object[prop]);
+        else if (field.specializer) {
+            result[prop] = field.specializer(object[prop]);
         }
         else if (field.class == Date) {
-            result[prop] = json4class.dateParser(object[prop]);
+            result[prop] = json4class.dateSpecializer(object[prop]);
         }
         else if (field.class) {
             result[prop] = json4class.specialize(object[prop], field.class);
@@ -74,16 +86,32 @@ json4class.specialize = function (object, constructor) {
     }
     return result;
 };
+json4class.parseObject = function (json, constructor) {
+    let object = JSON.parse(json);
+    if (Array.isArray(object))
+        throw new Error('Can not parse JSON array to object');
+    if (constructor)
+        object = json4class.specialize(object, constructor);
+    return object;
+};
+json4class.parseArray = function (json, constructor) {
+    let object = JSON.parse(json);
+    if (!Array.isArray(object))
+        throw new Error('Can not parse JSON object to array');
+    if (constructor)
+        object = json4class.specialize(object, constructor);
+    return object;
+};
 json4class.parse = function (json, constructor) {
     let object = JSON.parse(json);
     if (constructor)
         object = json4class.specialize(object, constructor);
     return object;
 };
-json4class.dateStringifier = function (date) {
+json4class.dateNormalizer = function (date) {
     return date.toISOString();
 };
-json4class.dateParser = function (date) {
+json4class.dateSpecializer = function (date) {
     return new Date(date);
 };
 //# sourceMappingURL=index.js.map
